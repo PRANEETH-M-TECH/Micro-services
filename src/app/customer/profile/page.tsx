@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/context/auth-context'
-import { Camera, Save, Phone, Mail, MapPin } from 'lucide-react'
+import { Camera, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function ProfilePage() {

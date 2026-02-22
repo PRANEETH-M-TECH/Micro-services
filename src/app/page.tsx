@@ -35,12 +35,15 @@ export default function Home() {
                 Order water cans for URBAN-RISE-City of Joy. Track deliveries in real-time, 
                 manage orders, and connect with your vendor seamlessly.
               </p>
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-4">
                 <Link href="/login" className="btn btn-primary">
                   Customer Login
                 </Link>
                 <Link href="/vendor/login" className="btn btn-secondary">
                   Vendor Login
+                </Link>
+                <Link href="/admin/login" className="btn bg-purple-600 hover:bg-purple-700 text-white">
+                  Admin Login
                 </Link>
               </div>
             </div>

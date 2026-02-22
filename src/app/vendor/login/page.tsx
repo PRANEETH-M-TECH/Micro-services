@@ -86,11 +86,17 @@ export default function VendorLoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-600">
+          <div className="mt-6 pt-4 border-t space-y-2">
+            <p className="text-center text-sm text-gray-600">
               Are you a customer?{' '}
               <Link href="/login" className="text-blue-600 font-semibold hover:underline">
-                Login here
+                Customer Login
+              </Link>
+            </p>
+            <p className="text-center text-sm text-gray-600">
+              Are you an admin?{' '}
+              <Link href="/admin/login" className="text-purple-600 font-semibold hover:underline">
+                Admin Login
               </Link>
             </p>
           </div>

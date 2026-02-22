@@ -94,11 +94,17 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="mt-4 pt-4 border-t">
+          <div className="mt-4 pt-4 border-t space-y-2">
             <p className="text-center text-sm text-gray-600">
               Are you a vendor?&nbsp;
               <Link href="/vendor/login" className="text-blue-600 font-semibold hover:underline">
-                Login here
+                Vendor Login
+              </Link>
+            </p>
+            <p className="text-center text-sm text-gray-600">
+              Are you an admin?&nbsp;
+              <Link href="/admin/login" className="text-purple-600 font-semibold hover:underline">
+                Admin Login
               </Link>
             </p>
           </div>

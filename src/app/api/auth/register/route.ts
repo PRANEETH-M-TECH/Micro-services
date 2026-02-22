@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth, db } from '@/lib/firebase'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { COLLECTIONS, DEFAULTS } from '@/lib/db-schema'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, name, phone, block, flatNumber, role, societyId } = body
+    const { email, password, name, phone, block, flatNumber, societyId } = body
 
     // Validate input
-    if (!email || !password || !name || !phone) {
+    if (!email || !password || !name || !phone || !block || !flatNumber || !societyId) {
       return NextResponse.json(
         { message: 'Missing required fields' },
         { status: 400 }
@@ -20,19 +21,21 @@ export async function POST(request: NextRequest) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password)
     const uid = userCredential.user.uid
 
-    // Create user document in Firestore
-    await setDoc(doc(db, 'users', uid), {
+    // Create user document in Firestore (customers only)
+    await setDoc(doc(db, COLLECTIONS.USERS, uid), {
       id: uid,
       email,
       name,
       phone,
-      role,
       societyId,
       block,
       flatNumber,
+      totalOrders: DEFAULTS.USER.totalOrders,
+      totalSpent: DEFAULTS.USER.totalSpent,
+      isVerified: DEFAULTS.USER.isVerified,
+      isActive: DEFAULTS.USER.isActive,
       createdAt: serverTimestamp(),
-      totalOrders: 0,
-      totalSpent: 0,
+      updatedAt: serverTimestamp(),
     })
 
     return NextResponse.json(
@@ -56,8 +59,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (error.code === 'auth/configuration-not-found') {
+      return NextResponse.json(
+        { 
+          message: 'Firebase Authentication not configured properly',
+          error: 'Please ensure: 1) Authentication is enabled in Firebase Console, 2) Email/Password provider is enabled, 3) Environment variables are correct. See FIREBASE_SETUP.md for details.'
+        },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
-      { message: 'Registration failed', error: error.message },
+      { message: 'Registration failed', error: error.message, code: error.code },
       { status: 500 }
     )
   }

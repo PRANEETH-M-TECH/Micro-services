@@ -3,29 +3,32 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import {
   signInWithEmailAndPassword,
-  signUpWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User as FirebaseUser,
 } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
 import { doc, getDoc } from 'firebase/firestore'
-import { User } from '@/types'
+import { User, Vendor, Admin } from '@/types'
+import { COLLECTIONS } from '@/lib/db-schema'
+
+type UserRole = 'customer' | 'vendor' | 'admin' | null
 
 interface AuthContextType {
-  user: User | null
+  user: User | Vendor | Admin | null
   firebaseUser: FirebaseUser | null
+  role: UserRole
   loading: boolean
   signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string, userData: Partial<User>) => Promise<void>
   signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<User | Vendor | Admin | null>(null)
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null)
+  const [role, setRole] = useState<UserRole>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -33,15 +36,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setFirebaseUser(fbUser)
       if (fbUser) {
         try {
-          const userDoc = await getDoc(doc(db, 'users', fbUser.uid))
-          if (userDoc.exists()) {
-            setUser({ id: fbUser.uid, ...userDoc.data() } as User)
+          // Check all collections to determine role (automatic role detection)
+          // Priority: Admin > Vendor > Customer
+          
+          // Check if admin
+          const adminDoc = await getDoc(doc(db, COLLECTIONS.ADMINS, fbUser.uid))
+          if (adminDoc.exists()) {
+            const adminData = adminDoc.data()
+            if (adminData.isActive) {
+              setUser({ id: fbUser.uid, ...adminData } as Admin)
+              setRole('admin')
+              setLoading(false)
+              return
+            }
           }
+
+          // Check if vendor
+          const vendorDoc = await getDoc(doc(db, COLLECTIONS.VENDORS, fbUser.uid))
+          if (vendorDoc.exists()) {
+            const vendorData = vendorDoc.data()
+            if (vendorData.isActive) {
+              setUser({ id: fbUser.uid, ...vendorData } as Vendor)
+              setRole('vendor')
+              setLoading(false)
+              return
+            }
+          }
+
+          // Check if customer
+          const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, fbUser.uid))
+          if (userDoc.exists()) {
+            const userData = userDoc.data()
+            if (userData.isActive) {
+              setUser({ id: fbUser.uid, ...userData } as User)
+              setRole('customer')
+              setLoading(false)
+              return
+            }
+          }
+
+          // User exists in Auth but not in any collection
+          setUser(null)
+          setRole(null)
         } catch (error) {
           console.error('Error fetching user:', error)
+          setUser(null)
+          setRole(null)
         }
       } else {
         setUser(null)
+        setRole(null)
       }
       setLoading(false)
     })
@@ -52,17 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       await signInWithEmailAndPassword(auth, email, password)
-    } catch (error) {
-      throw error
-    }
-  }
-
-  const signUp = async (email: string, password: string, userData: Partial<User>) => {
-    try {
-      // This would be implemented with custom claims or separate signup endpoint
-      // For now, using signUpWithEmailAndPassword is not standard Firebase Auth
-      // We'll handle this in our API route instead
-      await signInWithEmailAndPassword(auth, email, password)
+      // Role will be automatically detected in useEffect above
     } catch (error) {
       throw error
     }
@@ -72,13 +106,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await firebaseSignOut(auth)
       setUser(null)
+      setRole(null)
     } catch (error) {
       throw error
     }
   }
 
   return (
-    <AuthContext.Provider value={{ user, firebaseUser, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, firebaseUser, role, loading, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   )

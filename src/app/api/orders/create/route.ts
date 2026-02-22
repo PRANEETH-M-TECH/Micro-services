@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/firebase'
-import { collection, addDoc, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, getDoc } from 'firebase/firestore'
+import { COLLECTIONS, DEFAULTS, generateOrderNumber } from '@/lib/db-schema'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,34 +10,52 @@ export async function POST(request: NextRequest) {
       customerId,
       societyId,
       quantity,
+      waterPrice,
       waterCost,
       canCharge,
       totalCost,
       canIncluded,
+      canPrice,
       notes,
       block,
       flatNumber,
+      deliveryAddress,
     } = body
 
     // Validate input
-    if (!customerId || !societyId || !quantity) {
+    if (!customerId || !societyId || !quantity || !waterPrice || !waterCost || totalCost === undefined) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 })
     }
 
+    // Validate quantity
+    if (quantity < 1 || quantity > 10) {
+      return NextResponse.json({ message: 'Quantity must be between 1 and 10' }, { status: 400 })
+    }
+
+    // Generate order number
+    const currentYear = new Date().getFullYear()
+    // TODO: Get sequence from a counter collection or use timestamp-based approach
+    const orderNumber = generateOrderNumber(currentYear, Date.now() % 1000)
+
     // Create order in Firestore
-    const ordersCollection = collection(db, 'orders')
+    const ordersCollection = collection(db, COLLECTIONS.ORDERS)
     const orderDoc = await addDoc(ordersCollection, {
+      orderNumber,
       customerId,
       societyId,
       quantity,
+      waterPrice,
       waterCost,
-      canCharge,
+      canIncluded: canIncluded || false,
+      canPrice: canPrice || 0,
+      canCharge: canCharge || DEFAULTS.ORDER.canCharge,
       totalCost,
-      canIncluded,
-      notes,
       block,
       flatNumber,
-      status: 'pending',
+      deliveryAddress: deliveryAddress || null,
+      notes: notes || null,
+      status: DEFAULTS.ORDER.status,
+      createdBy: customerId,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     })
