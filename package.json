@@ -1,0 +1,37 @@
+{
+  "name": "urban-rise-water-delivery",
+  "version": "1.0.0",
+  "description": "Water delivery management application for URBAN-RISE-City of Joy",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "next": "^14.1.4",
+    "firebase": "^10.9.0",
+    "typescript": "^5.3.3",
+    "tailwindcss": "^3.4.1",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.33",
+    "lucide-react": "^0.344.0",
+    "date-fns": "^2.30.0",
+    "react-calendar": "^4.2.1",
+    "socket.io-client": "^4.7.2",
+    "axios": "^1.6.7",
+    "zustand": "^4.4.7",
+    "react-hot-toast": "^2.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "@types/react": "^18.2.47",
+    "@types/react-dom": "^18.2.18",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "^14.1.4",
+    "@types/react-calendar": "^4.1.0"
+  }
+}
