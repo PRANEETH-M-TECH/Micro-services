@@ -16,27 +16,41 @@ export default function AdminLoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('[admin-login] Submit clicked', { email })
     setLoading(true)
     setError('')
 
     try {
       // Sign in with Firebase Auth
+      console.log('[admin-login] Calling signInWithEmailAndPassword')
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      console.log('[admin-login] Firebase signInWithEmailAndPassword succeeded', {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+      })
       
       // Check if user is admin in Firestore
+      console.log('[admin-login] Verifying admin role via isAdmin')
       const admin = await isAdmin(userCredential.user.uid)
       
       if (!admin) {
+        console.warn('[admin-login] User is not registered as admin in Firestore', {
+          uid: userCredential.user.uid,
+        })
         setError('Access denied: User account exists in Firebase Auth but is NOT registered as admin in the database. Ask an administrator to create your admin account properly.')
         await auth.signOut()
         setShowTroubleshooting(true)
         return
       }
 
+      console.log('[admin-login] Admin verification passed, redirecting to /admin/dashboard')
       // Redirect to admin dashboard
       router.push('/admin/dashboard')
     } catch (error: any) {
-      console.error('Login error:', error)
+      console.error('[admin-login] Login error', {
+        code: error?.code,
+        message: error?.message,
+      })
       
       // Provide detailed error messages
       if (error.code === 'auth/user-not-found') {

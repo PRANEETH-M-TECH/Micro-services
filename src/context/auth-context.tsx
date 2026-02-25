@@ -33,6 +33,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      console.log('[auth-context] onAuthStateChanged triggered', {
+        hasUser: !!fbUser,
+        uid: fbUser?.uid,
+        email: fbUser?.email,
+      })
       setFirebaseUser(fbUser)
       if (fbUser) {
         try {
@@ -40,10 +45,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Priority: Admin > Vendor > Customer
           
           // Check if admin
+          console.log('[auth-context] Checking admin document', { uid: fbUser.uid })
           const adminDoc = await getDoc(doc(db, COLLECTIONS.ADMINS, fbUser.uid))
           if (adminDoc.exists()) {
             const adminData = adminDoc.data()
             if (adminData.isActive) {
+              console.log('[auth-context] Admin document active, setting role=admin', {
+                uid: fbUser.uid,
+                role: 'admin',
+              })
               setUser({ id: fbUser.uid, ...adminData } as Admin)
               setRole('admin')
               setLoading(false)
@@ -52,10 +62,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           // Check if vendor
+          console.log('[auth-context] Checking vendor document', { uid: fbUser.uid })
           const vendorDoc = await getDoc(doc(db, COLLECTIONS.VENDORS, fbUser.uid))
           if (vendorDoc.exists()) {
             const vendorData = vendorDoc.data()
             if (vendorData.isActive) {
+              console.log('[auth-context] Vendor document active, setting role=vendor', {
+                uid: fbUser.uid,
+                role: 'vendor',
+              })
               setUser({ id: fbUser.uid, ...vendorData } as Vendor)
               setRole('vendor')
               setLoading(false)
@@ -64,10 +79,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           // Check if customer
+          console.log('[auth-context] Checking customer document', { uid: fbUser.uid })
           const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, fbUser.uid))
           if (userDoc.exists()) {
             const userData = userDoc.data()
             if (userData.isActive) {
+              console.log('[auth-context] Customer document active, setting role=customer', {
+                uid: fbUser.uid,
+                role: 'customer',
+              })
               setUser({ id: fbUser.uid, ...userData } as User)
               setRole('customer')
               setLoading(false)
@@ -79,7 +99,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(null)
           setRole(null)
         } catch (error) {
-          console.error('Error fetching user:', error)
+          const err = error as any
+          console.error('[auth-context] Error fetching user role from Firestore', {
+            code: err?.code,
+            message: err?.message,
+          })
           setUser(null)
           setRole(null)
         }

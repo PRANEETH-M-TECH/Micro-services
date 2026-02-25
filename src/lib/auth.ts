@@ -64,13 +64,26 @@ export async function getVendorDoc(vendorId: string): Promise<Vendor | null> {
  */
 export async function getAdminDoc(adminId: string): Promise<Admin | null> {
   try {
+    console.log('[auth:getAdminDoc] Fetching admin document', { adminId })
     const adminDoc = await getDoc(doc(db, COLLECTIONS.ADMINS, adminId))
     if (adminDoc.exists()) {
-      return { id: adminDoc.id, ...adminDoc.data() } as Admin
+      const adminData = adminDoc.data()
+      console.log('[auth:getAdminDoc] Admin document found', {
+        adminId: adminDoc.id,
+        isActive: (adminData as any)?.isActive,
+        role: (adminData as any)?.role,
+      })
+      return { id: adminDoc.id, ...adminData } as Admin
     }
+    console.warn('[auth:getAdminDoc] No admin document for id', { adminId })
     return null
   } catch (error) {
-    console.error('Error fetching admin:', error)
+    const err = error as any
+    console.error('[auth:getAdminDoc] Error fetching admin document', {
+      adminId,
+      code: err?.code,
+      message: err?.message,
+    })
     return null
   }
 }
@@ -116,9 +129,16 @@ export async function isVendor(userId?: string): Promise<boolean> {
 export async function isAdmin(userId?: string): Promise<boolean> {
   const uid = userId || getCurrentUserId()
   if (!uid) return false
-  
+  console.log('[auth:isAdmin] Checking admin status for user', { uid })
   const admin = await getAdminDoc(uid)
-  return admin !== null && admin.isActive === true
+  const isAdminUser = admin !== null && admin.isActive === true
+  console.log('[auth:isAdmin] Result', {
+    uid,
+    hasAdminDoc: !!admin,
+    isActive: admin?.isActive,
+    isAdmin: isAdminUser,
+  })
+  return isAdminUser
 }
 
 /**
