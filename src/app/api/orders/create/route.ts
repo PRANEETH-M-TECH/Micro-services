@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/firebase'
-import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, getDoc } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore'
 import { COLLECTIONS, DEFAULTS, generateOrderNumber } from '@/lib/db-schema'
 
 export async function POST(request: NextRequest) {

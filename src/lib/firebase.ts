@@ -53,7 +53,6 @@ export const auth = getAuth(app);
 // issues on some networks / proxies.
 export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
-  useFetchStreams: false,
 });
 
 export const storage = getStorage(app);

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth, db } from '@/lib/firebase'
 import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth'
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore'
-import { COLLECTIONS, DEFAULTS } from '@/lib/db-schema'
+import { COLLECTIONS } from '@/lib/db-schema'
 
 /**
  * Public Vendor Registration Route

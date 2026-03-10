@@ -12,7 +12,7 @@ import { requireAdmin } from '@/lib/auth'
 export async function GET(request: NextRequest) {
   try {
     // Verify admin access
-    const admin = await requireAdmin()
+    await requireAdmin()
 
     const { searchParams } = new URL(request.url)
     const verified = searchParams.get('verified') // 'true' | 'false' | null (all)

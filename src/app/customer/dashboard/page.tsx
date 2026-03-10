@@ -92,7 +92,7 @@ export default function CustomerDashboard() {
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg p-6 md:p-8">
         <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome, {user?.name}!</h1>
-        <p className="text-blue-100">Block {user?.block}, Flat {user?.flatNumber} • {user?.phone}</p>
+        <p className="text-blue-100">Block {(user as any)?.block}, Flat {(user as any)?.flatNumber} • {user?.phone}</p>
       </div>
 
       {/* Stats Grid */}

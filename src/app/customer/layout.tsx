@@ -53,7 +53,7 @@ export default function CustomerLayout({ children }: { children: ReactNode }) {
           {user && (
             <div className="p-4 border-b mx-4 my-4 rounded-lg bg-blue-50">
               <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-              <p className="text-xs text-gray-600">{user.block}/{user.flatNumber}</p>
+              <p className="text-xs text-gray-600">{(user as any).block}/{(user as any).flatNumber}</p>
               <p className="text-xs text-gray-600 mt-1">{user.phone}</p>
             </div>
           )}

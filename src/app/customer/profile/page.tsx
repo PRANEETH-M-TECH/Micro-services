@@ -4,17 +4,39 @@ import { useState } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { Camera, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
+import type { User } from '@/types'
 
 export default function ProfilePage() {
-  const { user } = useAuth()
+  const { user, role, loading: authLoading } = useAuth()
+  const customer = role === 'customer' && user ? (user as User) : null
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    block: user?.block || '',
-    flatNumber: user?.flatNumber || '',
+    name: customer?.name || '',
+    email: customer?.email || '',
+    phone: customer?.phone || '',
+    block: customer?.block || '',
+    flatNumber: customer?.flatNumber || '',
   })
+
+  if (authLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="card-lg">
+          <p className="text-gray-700">Loading your profile...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!customer) {
+    return (
+      <div className="space-y-6">
+        <div className="card-lg">
+          <p className="text-gray-700">Only customer accounts have a residential profile.</p>
+        </div>
+      </div>
+    )
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -47,7 +69,7 @@ export default function ProfilePage() {
           <h3 className="text-lg font-bold text-gray-900 mb-4">Profile Picture</h3>
           <div className="flex flex-col items-center">
             <div className="w-32 h-32 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-white mb-4">
-              <span className="text-4xl font-bold">{(user?.name || 'U').charAt(0)}</span>
+              <span className="text-4xl font-bold">{(customer.name || 'U').charAt(0)}</span>
             </div>
             <button className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors">
               <Camera className="w-4 h-4" />

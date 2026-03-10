@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/firebase'
 import { collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs } from 'firebase/firestore'
-import { COLLECTIONS, DEFAULTS, generateBillNumber, generatePeriodLabel, calculatePeriodDates } from '@/lib/db-schema'
+import { COLLECTIONS, generateBillNumber, generatePeriodLabel, calculatePeriodDates } from '@/lib/db-schema'
 import { requireVendor } from '@/lib/auth'
 
 /**
@@ -70,12 +70,19 @@ export async function POST(request: NextRequest) {
       )
       
       const ordersSnapshot = await getDocs(ordersQuery)
-      ordersToBill = ordersSnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(order => {
-          const orderDate = order.deliveryTime?.toDate() || order.createdAt?.toDate()
-          return orderDate >= start && orderDate <= end
-        })
+      const orders = ordersSnapshot.docs.map(doc => {
+        const data = doc.data() as any
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate?.() || new Date(),
+          deliveryTime: data.deliveryTime?.toDate?.() || null // Ensure deliveryTime is a Date object or null
+        }
+      }).filter(order => {
+        const orderDate = order.deliveryTime || order.createdAt
+        return orderDate >= start && orderDate <= end
+      })
+      ordersToBill = orders
     }
 
     if (ordersToBill.length === 0) {

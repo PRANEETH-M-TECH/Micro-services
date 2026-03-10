@@ -13,6 +13,7 @@ import {
   updateDoc,
   where,
   writeBatch,
+  doc
 } from 'firebase/firestore'
 import { COLLECTIONS, DEFAULTS } from '@/lib/db-schema'
 

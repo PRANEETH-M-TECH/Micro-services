@@ -5,12 +5,13 @@ import { useAuth } from '@/context/auth-context'
 import { Droplets, Minus, Plus, AlertCircle } from 'lucide-react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
+import type { User } from '@/types'
 
 const WATER_PRICE = 100 // per can
 const CAN_PRICE = 50 // first order only
 
 export default function NewOrderPage() {
-  const { user } = useAuth()
+  const { user, role, loading: authLoading } = useAuth()
   const [quantity, setQuantity] = useState(1)
   const [isNewCustomer, setIsNewCustomer] = useState(false)
   const [notes, setNotes] = useState('')
@@ -27,20 +28,42 @@ export default function NewOrderPage() {
     }
   }
 
+  if (authLoading) {
+    return (
+      <div className="space-y-8">
+        <div className="card-lg">
+          <p className="text-gray-700">Loading your profile...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user || role !== 'customer') {
+    return (
+      <div className="space-y-8">
+        <div className="card-lg">
+          <p className="text-gray-700">Only customer accounts can place orders.</p>
+        </div>
+      </div>
+    )
+  }
+
+  const customer = user as User
+
   const handlePlaceOrder = async () => {
     setLoading(true)
     try {
       await axios.post('/api/orders/create', {
-        customerId: user?.id,
-        societyId: user?.societyId,
+        customerId: customer.id,
+        societyId: customer.societyId,
         quantity,
         waterCost,
         canCharge,
         totalCost,
         canIncluded: isNewCustomer,
         notes,
-        block: user?.block,
-        flatNumber: user?.flatNumber,
+        block: (customer as any).block,
+        flatNumber: (customer as any).flatNumber,
       })
 
       toast.success('Order placed successfully!')
@@ -71,21 +94,21 @@ export default function NewOrderPage() {
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-gray-600">Name</p>
-                <p className="font-semibold text-gray-900">{user?.name}</p>
+                <p className="font-semibold text-gray-900">{customer.name}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-600">Block</p>
-                  <p className="font-semibold text-gray-900">{user?.block}</p>
+                  <p className="font-semibold text-gray-900">{(customer as any).block}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Flat</p>
-                  <p className="font-semibold text-gray-900">{user?.flatNumber}</p>
+                  <p className="font-semibold text-gray-900">{(customer as any).flatNumber}</p>
                 </div>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Phone</p>
-                <p className="font-semibold text-gray-900">{user?.phone}</p>
+                <p className="font-semibold text-gray-900">{customer.phone}</p>
               </div>
             </div>
           </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Package, Users, TrendingUp, Clock, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Package, Users, TrendingUp, Clock, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 
 export default function VendorDashboard() {
@@ -16,7 +16,6 @@ export default function VendorDashboard() {
     },
   })
   const [recentOrders, setRecentOrders] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     // Mock data
@@ -66,8 +65,6 @@ export default function VendorDashboard() {
         time: '4 hours ago',
       },
     ])
-
-    setLoading(false)
   }, [])
 
   const getStatusColor = (status: string) => {
