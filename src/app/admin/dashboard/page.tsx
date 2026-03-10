@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, Package, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
+import { Users, Package, XCircle, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 
 export default function AdminDashboard() {

@@ -73,6 +73,30 @@ export interface Vendor {
 }
 
 // ============================================
+// VENDOR REQUEST TYPES (Self Registration)
+// ============================================
+
+export interface VendorRequest {
+  id: string;                    // Firebase Auth UID (same as document ID)
+  email: string;                 // Vendor email (unique)
+  name: string;                  // Vendor name
+  phone: string;                 // Phone number
+  societyId: string;             // Reference to societies collection
+
+  status: 'pending' | 'approved' | 'rejected';
+
+  createdAt: Date;
+  updatedAt: Date;
+
+  approvedAt?: Date;
+  approvedBy?: string;
+
+  rejectedAt?: Date;
+  rejectedBy?: string;
+  rejectionReason?: string;
+}
+
+// ============================================
 // ADMIN TYPES
 // ============================================
 

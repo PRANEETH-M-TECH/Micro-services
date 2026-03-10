@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Users, CheckCircle2, XCircle, Search } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { CheckCircle2, XCircle } from 'lucide-react'
 import Link from 'next/link'
 
 interface Customer {
@@ -20,11 +20,7 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'verified' | 'unverified'>('all')
 
-  useEffect(() => {
-    fetchCustomers()
-  }, [filter])
-
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     try {
       setLoading(true)
       const verifiedParam = filter === 'all' ? null : filter === 'verified' ? 'true' : 'false'
@@ -38,7 +34,11 @@ export default function CustomersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filter])
+
+  useEffect(() => {
+    void fetchCustomers()
+  }, [fetchCustomers])
 
   const handleVerify = async (customerId: string) => {
     try {

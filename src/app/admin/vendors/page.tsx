@@ -1,8 +1,20 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Package, CheckCircle2, XCircle, Plus } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { CheckCircle2, XCircle, Plus, Clock } from 'lucide-react'
 import Link from 'next/link'
+import { auth, db } from '@/lib/firebase'
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+  writeBatch,
+} from 'firebase/firestore'
+import { COLLECTIONS, DEFAULTS } from '@/lib/db-schema'
 
 interface Vendor {
   id: string
@@ -14,8 +26,19 @@ interface Vendor {
   createdAt: any
 }
 
+interface VendorRequest {
+  id: string
+  name: string
+  email: string
+  phone: string
+  societyId: string
+  status: 'pending' | 'approved' | 'rejected'
+  createdAt: any
+}
+
 export default function VendorsPage() {
   const [vendors, setVendors] = useState<Vendor[]>([])
+  const [vendorRequests, setVendorRequests] = useState<VendorRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'approved' | 'unapproved'>('all')
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -27,68 +50,168 @@ export default function VendorsPage() {
     societyId: 'urban-rise-city-of-joy',
   })
 
-  useEffect(() => {
-    fetchVendors()
-  }, [filter])
-
-  const fetchVendors = async () => {
+  const fetchVendors = useCallback(async () => {
     try {
       setLoading(true)
-      const approvedParam = filter === 'all' ? null : filter === 'approved' ? 'true' : 'false'
-      const url = `/api/admin/vendors/list${approvedParam ? `?approved=${approvedParam}` : ''}`
-      
-      const res = await fetch(url)
-      const data = await res.json()
-      setVendors(data.vendors || [])
+      const vendorsRef = collection(db, COLLECTIONS.VENDORS)
+      const conditions: any[] = []
+
+      if (filter === 'approved') {
+        conditions.push(where('isApproved', '==', true))
+      } else if (filter === 'unapproved') {
+        conditions.push(where('isApproved', '==', false))
+      }
+
+      const qs = query(
+        vendorsRef,
+        ...conditions,
+        orderBy('createdAt', 'desc')
+      )
+      const snap = await getDocs(qs)
+      setVendors(
+        snap.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as any),
+        }))
+      )
     } catch (error) {
       console.error('Error fetching vendors:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [filter])
+
+  const fetchVendorRequests = useCallback(async () => {
+    try {
+      const reqRef = collection(db, COLLECTIONS.VENDOR_REQUESTS)
+      const qs = query(reqRef, where('status', '==', 'pending'), orderBy('createdAt', 'desc'))
+      const snap = await getDocs(qs)
+      setVendorRequests(
+        snap.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as any),
+        }))
+      )
+    } catch (error) {
+      console.error('Error fetching vendor requests:', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    void fetchVendors()
+    void fetchVendorRequests()
+  }, [fetchVendors, fetchVendorRequests])
 
   const handleCreateVendor = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const res = await fetch('/api/admin/vendors/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
-
-      if (res.ok) {
-        alert('Vendor created successfully!')
-        setShowCreateForm(false)
-        setFormData({ email: '', password: '', name: '', phone: '', societyId: 'urban-rise-city-of-joy' })
-        fetchVendors()
-      } else {
-        const data = await res.json()
-        alert(data.message || 'Failed to create vendor')
-      }
+      alert(
+        'Admin-created vendors are now expected to self-register first. Ask the vendor to register from the Vendor Registration page, then approve the request here.'
+      )
     } catch (error) {
       console.error('Error creating vendor:', error)
       alert('Failed to create vendor')
     }
   }
 
-  const handleApprove = async (vendorId: string) => {
+  const handleApproveExistingVendor = async (vendorId: string) => {
     try {
-      const res = await fetch('/api/admin/vendors/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vendorId }),
+      const uid = auth.currentUser?.uid
+      if (!uid) {
+        alert('Not authenticated. Please log in as admin.')
+        return
+      }
+
+      await updateDoc(doc(db, COLLECTIONS.VENDORS, vendorId), {
+        isApproved: true,
+        approvedAt: serverTimestamp(),
+        approvedBy: uid,
+        updatedAt: serverTimestamp(),
       })
 
-      if (res.ok) {
-        fetchVendors() // Refresh list
-        alert('Vendor approved successfully!')
-      } else {
-        const data = await res.json()
-        alert(data.message || 'Failed to approve vendor')
-      }
+      await fetchVendors()
+      alert('Vendor approved successfully!')
     } catch (error) {
       console.error('Error approving vendor:', error)
       alert('Failed to approve vendor')
+    }
+  }
+
+  const handleApproveRequest = async (requestId: string) => {
+    try {
+      const adminId = auth.currentUser?.uid
+      if (!adminId) {
+        alert('Not authenticated. Please log in as admin.')
+        return
+      }
+
+      const request = vendorRequests.find((r) => r.id === requestId)
+      if (!request) {
+        alert('Vendor request not found.')
+        return
+      }
+
+      const batch = writeBatch(db)
+      const vendorRef = doc(db, COLLECTIONS.VENDORS, requestId)
+      const reqRef = doc(db, COLLECTIONS.VENDOR_REQUESTS, requestId)
+
+      batch.set(vendorRef, {
+        id: requestId,
+        email: request.email,
+        name: request.name,
+        phone: request.phone,
+        societyId: request.societyId,
+        rating: DEFAULTS.VENDOR.rating,
+        totalDeliveries: DEFAULTS.VENDOR.totalDeliveries,
+        totalEarnings: DEFAULTS.VENDOR.totalEarnings,
+        status: DEFAULTS.VENDOR.status,
+        isActive: true,
+        isApproved: true,
+        approvedAt: serverTimestamp(),
+        approvedBy: adminId,
+        createdBy: adminId,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      })
+
+      batch.update(reqRef, {
+        status: 'approved',
+        approvedAt: serverTimestamp(),
+        approvedBy: adminId,
+        updatedAt: serverTimestamp(),
+      })
+
+      await batch.commit()
+
+      await fetchVendorRequests()
+      await fetchVendors()
+      alert('Vendor request approved and vendor created.')
+    } catch (error) {
+      console.error('Error approving vendor request:', error)
+      alert('Failed to approve vendor request')
+    }
+  }
+
+  const handleRejectRequest = async (requestId: string) => {
+    try {
+      const adminId = auth.currentUser?.uid
+      if (!adminId) {
+        alert('Not authenticated. Please log in as admin.')
+        return
+      }
+
+      await updateDoc(doc(db, COLLECTIONS.VENDOR_REQUESTS, requestId), {
+        status: 'rejected',
+        rejectedAt: serverTimestamp(),
+        rejectedBy: adminId,
+        updatedAt: serverTimestamp(),
+      })
+
+      await fetchVendorRequests()
+      alert('Vendor request rejected.')
+    } catch (error) {
+      console.error('Error rejecting vendor request:', error)
+      alert('Failed to reject vendor request')
     }
   }
 
@@ -193,6 +316,60 @@ export default function VendorsPage() {
         </div>
       )}
 
+      {/* Pending Vendor Requests */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="px-6 py-4 border-b flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-orange-600" />
+            <h2 className="text-lg font-bold">Pending Vendor Requests</h2>
+          </div>
+          <span className="text-sm text-gray-600">{vendorRequests.length} pending</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {vendorRequests.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-6 text-center text-gray-500">
+                    No pending vendor requests
+                  </td>
+                </tr>
+              ) : (
+                vendorRequests.map((req) => (
+                  <tr key={req.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap font-medium">{req.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">{req.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">{req.phone}</td>
+                    <td className="px-6 py-4 whitespace-nowrap flex gap-2">
+                      <button
+                        onClick={() => handleApproveRequest(req.id)}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleRejectRequest(req.id)}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+                      >
+                        Reject
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Filters */}
       <div className="bg-white rounded-lg shadow p-4">
         <div className="flex gap-4">
@@ -275,7 +452,7 @@ export default function VendorsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {!vendor.isApproved && (
                         <button
-                          onClick={() => handleApprove(vendor.id)}
+                          onClick={() => handleApproveExistingVendor(vendor.id)}
                           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
                         >
                           Approve

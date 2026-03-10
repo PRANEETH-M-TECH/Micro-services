@@ -157,7 +157,7 @@ export default function AdminLoginPage() {
 
               <div className="pt-2 border-t border-blue-200">
                 <p className="text-xs text-gray-500">
-                  Once both accounts are created, you'll be able to login here.
+                  Once both accounts are created, you will be able to login here.
                 </p>
               </div>
             </div>

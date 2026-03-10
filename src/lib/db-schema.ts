@@ -12,6 +12,7 @@
 export const COLLECTIONS = {
   USERS: 'users',
   VENDORS: 'vendors',
+  VENDOR_REQUESTS: 'vendorRequests',
   ADMINS: 'admins',
   ORDERS: 'orders',
   BILLS: 'bills',
