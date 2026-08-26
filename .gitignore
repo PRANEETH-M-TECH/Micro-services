@@ -1,43 +1,28 @@
 # Dependencies
-/node_modules
-/.pnp
-.pnp.js
+node_modules/
 
-# Testing
-/coverage
-
-# Next.js build output
-/.next
-/out
-
-# Production
-/build
-/dist
-
-# Misc
-.DS_Store
-*.pem
+# Env files
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.secret.txt
+
+# Build output
+dist/
+.next/
+/legacy/.next/
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Editor directories and files
+# Editor / OS
+.DS_Store
 .vscode
 .idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# OS
 Thumbs.db
+*.pem
 
-app-info/
+# Legacy app's Firebase secrets / generated docs (kept locally, not tracked)
+legacy/.env
+legacy/app-info/

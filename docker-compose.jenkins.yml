@@ -1,0 +1,27 @@
+# Jenkins itself, run separately from the app stack (docker-compose.yml).
+# Jenkins gets access to the HOST's Docker daemon (docker-outside-of-docker) so its
+# pipeline can build/redeploy the app's own containers without nested Docker-in-Docker.
+#
+# Start with:  docker compose -f docker-compose.jenkins.yml up -d
+# First-run admin password:  docker exec communa-jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+
+name: communa-jenkins
+
+services:
+  jenkins:
+    build: ./jenkins
+    container_name: communa-jenkins
+    restart: unless-stopped
+    user: root
+    ports:
+      - '8080:8080'
+      - '50000:50000'
+    volumes:
+      - communa_jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./:/workspace
+    environment:
+      DOCKER_HOST: unix:///var/run/docker.sock
+
+volumes:
+  communa_jenkins_home:
