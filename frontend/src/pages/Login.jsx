@@ -30,9 +30,17 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
-      <div className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-primary-dark">Welcome back</h1>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-primary-darker via-primary-dark to-primary px-6">
+      <div className="animate-float-orb pointer-events-none absolute -left-24 -top-24 h-80 w-80 rounded-full bg-accent/20 blur-3xl" />
+      <div className="animate-float-orb-slow pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-mint/10 blur-3xl" />
+
+      <div className="animate-card-in relative w-full max-w-sm rounded-xl border border-gray-200 bg-white p-8 shadow-xl">
+        <div className="mb-5 flex justify-center">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+            <span className="text-lg font-bold text-mint">C</span>
+          </div>
+        </div>
+        <h1 className="text-center text-2xl font-bold text-primary-dark">Welcome back</h1>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <input
             type="email"
