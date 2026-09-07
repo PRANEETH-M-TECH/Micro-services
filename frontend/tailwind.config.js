@@ -4,13 +4,26 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Communa brand green, pulled out of the legacy landing page's
-        // inline hex classes (legacy/src/app/page.tsx) into a real theme token.
+        // Communa brand palette, consolidated from the legacy landing/login/
+        // register pages (legacy/src/app/**/page.tsx) into real theme tokens.
         primary: {
           DEFAULT: '#0F6E56',
           dark: '#085041',
-          light: '#E6F4F0',
+          darker: '#0D1F1A',
+          light: '#E1F5EE',
         },
+        accent: '#1D9E75',
+        mint: {
+          DEFAULT: '#9FE1CB',
+          soft: '#5DCAA5',
+        },
+        ink: '#111827',
+        surface: '#F9FAFB',
+        category: {
+          purple: { DEFAULT: '#534AB7', dark: '#26215C', light: '#EEEDFE' },
+          amber: { DEFAULT: '#854F0B', dark: '#412402', light: '#FAEEDA' },
+        },
+        danger: '#E24B4A',
       },
     },
   },

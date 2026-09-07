@@ -5,3 +5,16 @@
 body {
   @apply bg-gray-50 text-gray-900;
 }
+
+@keyframes hero-crossfade {
+  0% { opacity: 0; }
+  2% { opacity: 1; }
+  23% { opacity: 1; }
+  25% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.hero-slide {
+  opacity: 0;
+  animation: hero-crossfade 12s ease-in-out infinite;
+}
