@@ -1,0 +1,75 @@
+JENKINS PIPELINE DEMO — exact steps to show a live change going through CI/CD
+================================================================================
+
+GOAL: make one small, obviously-visible change, push it, and show the
+evaluator Jenkins picking it up and deploying it automatically.
+
+--------------------------------------------------------------------------------
+STEP 1 — Make the change
+--------------------------------------------------------------------------------
+File:  frontend/src/pages/Landing.jsx
+Line:  33
+
+Find this line (the "Enter Community" button):
+
+    className="mt-8 rounded-lg bg-primary px-8 py-3 font-semibold text-white shadow-sm transition hover:bg-primary-dark"
+
+Change `bg-primary` to `bg-accent` so it reads:
+
+    className="mt-8 rounded-lg bg-accent px-8 py-3 font-semibold text-white shadow-sm transition hover:bg-primary-dark"
+
+This turns the button from dark green (#0F6E56) to teal (#1D9E75) — a clearly
+visible color change on the very first page of the app, no login required.
+
+--------------------------------------------------------------------------------
+STEP 2 — Commit and push
+--------------------------------------------------------------------------------
+Run from the repo root:
+
+    git add frontend/src/pages/Landing.jsx
+    git commit -m "Demo: change CTA button color"
+    git push origin main
+
+--------------------------------------------------------------------------------
+STEP 3 — Show Jenkins picking it up
+--------------------------------------------------------------------------------
+Open http://localhost:8080/job/communa-pipeline in the browser.
+
+Jenkins polls GitHub for new commits automatically (usually within about a
+minute). To trigger it instantly instead of waiting, click "Build Now" in
+the left sidebar of that job page.
+
+Click into the new build number at the top of the build history list, then
+"Console Output" to show the evaluator the live log: it installs deps, runs
+tests, builds the frontend Docker image, and redeploys the stack.
+
+--------------------------------------------------------------------------------
+STEP 4 — Show the deployed result
+--------------------------------------------------------------------------------
+Once the console output ends with "Communa deployed successfully. Live at
+http://localhost", open http://localhost and refresh. The "Enter Community"
+button is now teal instead of dark green — proof the pipeline built and
+deployed the change with no manual redeploy step.
+
+--------------------------------------------------------------------------------
+STEP 5 (optional) — Revert back afterward
+--------------------------------------------------------------------------------
+    File: frontend/src/pages/Landing.jsx, line 33
+    Change `bg-accent` back to `bg-primary`
+
+    git add frontend/src/pages/Landing.jsx
+    git commit -m "Revert demo button color"
+    git push origin main
+
+--------------------------------------------------------------------------------
+NOTES
+--------------------------------------------------------------------------------
+- Any other single visible tweak works the same way — e.g. the tagline text
+  in Landing.jsx (line 28-29), or a heading color in Login.jsx/Register.jsx
+  (search for `text-primary-dark`). The point for the demo is: one small
+  change -> commit -> push -> Jenkins builds & redeploys -> visible on
+  http://localhost, with no manual Docker commands in between.
+- Jenkins UI login is required to view build history/console output; use
+  your own Jenkins admin credentials for this project (docker exec
+  communa-jenkins cat /var/jenkins_home/secrets/initialAdminPassword the
+  first time, if you haven't already set a password).

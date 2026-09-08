@@ -1,4 +1,8 @@
-require('dotenv').config();
+// Loads the repo-root .env regardless of CWD, so `npm run dev` from backend/
+// picks up the same file docker-compose uses. Inside Docker there's no .env
+// file at all (env vars come from docker-compose's `environment:` block
+// directly) — dotenv just silently no-ops if the path doesn't exist.
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');

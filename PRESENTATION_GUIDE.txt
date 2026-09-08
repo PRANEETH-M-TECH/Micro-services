@@ -1,0 +1,227 @@
+====================================================================
+COMMUNA — PRESENTATION DAY GUIDE
+====================================================================
+Quick-reference cheat sheet for the live demo. Full technical details
+are in README.md — this file is just what you need in front of you
+during the presentation itself.
+
+
+--------------------------------------------------------------------
+1. BEFORE THE EVALUATOR ARRIVES — STARTUP CHECKLIST
+--------------------------------------------------------------------
+
+Step 1 — Open Docker Desktop
+    Start it from the Windows Start menu. Wait until it shows
+    "Engine running" (bottom-left, green) before doing anything else.
+
+Step 2 — Open PowerShell, go to the project folder
+    cd "C:\Users\home\Desktop\Micro\Micro-services"
+
+Step 3 — Start the application stack
+    docker compose up -d
+    Wait for it to say all 3 containers are Running/Healthy.
+
+Step 4 — Start Jenkins
+    docker compose -f docker-compose.jenkins.yml up -d
+
+Step 5 — Confirm everything is actually up
+    docker compose ps
+        -> db, backend, frontend should all show "Up" (db and
+           backend should say "healthy")
+    docker compose -f docker-compose.jenkins.yml ps
+        -> communa-jenkins should show "Up"
+
+Step 6 — Load demo data (only needs to be done once ever, but safe
+to re-run any time — it skips anything already there)
+    cd backend
+    npm run seed
+    cd ..
+
+Step 7 — Open these two browser tabs and leave them ready:
+    Tab A: http://localhost            (the app itself)
+    Tab B: http://localhost:8080       (Jenkins dashboard, log in)
+
+If ANY of the above doesn't work, see the TROUBLESHOOTING section
+near the bottom of this file before panicking.
+
+
+--------------------------------------------------------------------
+2. DEMO LOGIN CREDENTIALS
+--------------------------------------------------------------------
+
+Admin
+    Email:    (whatever ADMIN_EMAIL is set to in your .env file)
+    Password: (whatever ADMIN_PASSWORD is set to in your .env file)
+
+Pre-approved consumer (browse without registering live)
+    Email:    demo.consumer@communa.local
+    Password: Demo@123
+
+Pre-approved consumer (hand this to the evaluator if they want to
+click around themselves)
+    Email:    faculty.guest@communa.local
+    Password: Demo@123
+
+Pre-approved sellers (one already-approved listing in every
+category, so no category page looks empty)
+    lakshmi.kitchen@communa.local   -> Food
+    fatima.ethnic@communa.local     -> Clothing
+    suresh.store@communa.local      -> Essentials
+    vikram.tailor@communa.local     -> Additional Services
+    ramesh.tuition@communa.local    -> Tuitions
+    (all use password: Demo@123)
+
+Jenkins login
+    Same admin account you created during Jenkins first-time setup.
+    (If forgotten: docker exec communa-jenkins cat
+     /var/jenkins_home/secrets/initialAdminPassword — but this only
+     works before the setup wizard was ever completed, so it likely
+     won't work anymore; use your saved Jenkins username/password.)
+
+
+--------------------------------------------------------------------
+3. WHAT TO SAY — THE EXPLANATION SCRIPT
+--------------------------------------------------------------------
+
+Use this structure when talking through the project:
+
+  "Communa is a society-restricted marketplace app — residents can
+  discover and contact verified sellers within their own housing
+  society: food, clothing, essentials, services, tuitions. Every
+  account, whether a buyer or seller, is approved by a society admin
+  before getting access — that keeps it trustworthy and closed to
+  outsiders."
+
+  "The stack is: React with Vite for the frontend, Node.js and
+  Express for the backend REST API, PostgreSQL for the database,
+  and JWT-based authentication. There's also a small AI layer using
+  Google's Gemini API — for natural-language search, suggesting a
+  category from a rough description, and generating a polished
+  listing from a seller's rough notes. AI suggestions are always
+  advisory only — nothing gets published without the admin approving
+  it, which is our human-in-the-loop safeguard against AI bias."
+
+  "For deployment, the whole app is containerized with Docker — the
+  frontend, backend, and database each run in their own container,
+  wired together with Docker Compose. That's what makes it portable
+  and reproducible: it runs identically wherever Docker is installed,
+  which matters for a real engineering deployment story."
+
+  "On top of that, we set up Jenkins for CI/CD — it watches this
+  exact Git repository, and any time new code is pushed, it
+  automatically runs the tests, rebuilds the Docker images, redeploys
+  the containers, and health-checks that the new version actually
+  came up — all without a human touching a keyboard after the push.
+  I'll show that live in a moment."
+
+  "This demonstrates the full software engineering lifecycle the
+  course asks for: requirements -> design -> build -> automated
+  testing -> containerized deployment -> continuous delivery."
+
+
+--------------------------------------------------------------------
+4. LIVE DEMO — STEP BY STEP
+--------------------------------------------------------------------
+
+PART A — The application itself
+
+ 1. Show http://localhost — the landing page, click "Enter Community"
+ 2. Log in as admin -> show the Admin Dashboard
+ 3. In a private/incognito window, REGISTER A NEW consumer account
+    live -> show it lands on "Pending Approval"
+ 4. Back in the admin tab, "Pending Consumers" tab -> Approve it
+ 5. Log in as that newly-approved consumer -> Category Grid appears
+ 6. Click into a category (e.g. Food) -> show the pre-seeded approved
+    listing
+ 7. Click into that listing -> show Call / WhatsApp contact buttons
+ 8. Use the Smart Search bar with a natural-language query, e.g.
+    "someone who sells homemade food" -> AI returns matching sellers
+ 9. (Optional) Register a NEW seller account live, fill "Become a
+    Seller," click the two AI buttons (Suggest Category, Generate
+    Listing), submit -> show it as "pending" -> approve it as admin
+    -> show it now live in its category
+
+PART B — The CI/CD pipeline (the most important part to rehearse)
+
+ 1. Open frontend/src/pages/Landing.jsx in VS Code
+ 2. Make ONE small, clearly visible change (e.g. change the headline
+    text, or change a color class like text-primary to something
+    else)
+ 3. Save the file
+ 4. In PowerShell:
+        git add frontend/src/pages/Landing.jsx
+        git commit -m "Demo: live UI change for presentation"
+        git push
+ 5. Switch to the Jenkins tab (http://localhost:8080/job/communa-pipeline/)
+ 6. Within about 60 seconds, a NEW BUILD STARTS ON ITS OWN — point
+    this out explicitly: "nobody clicked Build Now, Jenkins noticed
+    the commit by itself"
+ 7. Click into the running build -> Console Output -> narrate the
+    stages as they run: Checkout, Backend tests, Frontend tests,
+    Build Images, Deploy, Health Check
+ 8. Wait for "Finished: SUCCESS"
+ 9. Refresh http://localhost -> show the change is now live
+10. Closing line: "That's the full loop — a code change went from my
+    editor to a live, tested, redeployed application with a single
+    git push and zero manual deployment steps."
+
+
+--------------------------------------------------------------------
+5. TROUBLESHOOTING — QUICK FIXES
+--------------------------------------------------------------------
+
+Docker command fails, mentions "dockerDesktopLinuxEngine"
+    -> Docker Desktop isn't running. Open it, wait for "Engine
+       running," retry.
+
+"The system cannot find the file specified" on a docker-compose
+command
+    -> You're in the wrong folder. Run:
+       cd "C:\Users\home\Desktop\Micro\Micro-services"
+
+Jenkins container not found / won't open in browser
+    -> docker compose -f docker-compose.jenkins.yml up -d
+    -> wait 30-60 seconds, then reload http://localhost:8080
+
+App containers won't start, mention "port already allocated"
+    -> Something else already has that port. Run "docker compose ps"
+       to see what's running; stop the conflicting stack first.
+
+Jenkins pipeline fails with "Unable to find Jenkinsfile"
+    -> Your latest code wasn't committed/pushed. Run:
+       git add -A
+       git commit -m "..."
+       git push
+       Then trigger the build again (Build Now, or wait for Poll SCM)
+
+AI buttons (Smart Search / Suggest Category / Generate Listing)
+error out
+    -> Check GEMINI_API_KEY is set correctly in .env, then:
+       docker compose up -d --build backend
+
+Forgot the admin password
+    -> Check the ADMIN_EMAIL / ADMIN_PASSWORD lines in your .env
+       file directly (don't read this out loud in front of anyone).
+
+Something looks broken and you're not sure why
+    -> docker compose logs -f backend    (backend errors)
+    -> docker compose logs -f frontend   (frontend/nginx errors)
+    -> Full troubleshooting table is in README.md section 8
+
+
+--------------------------------------------------------------------
+6. IF ALL ELSE FAILS DURING THE ACTUAL PRESENTATION
+--------------------------------------------------------------------
+
+- If Jenkins doesn't trigger automatically in time, click "Build Now"
+  manually in the Jenkins UI — the result is the same, just say
+  "I'll trigger it manually to save time, but it would also happen
+  on its own within a minute via Poll SCM."
+- If Docker itself is having issues, the README.md file and the
+  Jenkins Console Output logs from an earlier successful run are
+  still valid evidence of the pipeline having worked — you can walk
+  through a screenshot/previous console log if a live rebuild fails
+  under time pressure.
+- Stay calm — you already have a fully working, tested pipeline.
+  Anything going wrong live is almost always the "wrong folder" or
+  "Docker Desktop not started yet" issue, both fixed in seconds.

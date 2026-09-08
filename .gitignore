@@ -1,10 +1,12 @@
 # Dependencies
 node_modules/
 
-# Env files
+# Env files / secrets
 .env
 .env.local
 .secret.txt
+secret.txt
+
 
 # Build output
 dist/

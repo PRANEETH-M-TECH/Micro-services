@@ -22,6 +22,9 @@ services:
       - ./:/workspace
     environment:
       DOCKER_HOST: unix:///var/run/docker.sock
+      # /workspace is a bind-mount of this same repo, not an arbitrary path — safe to allow
+      # the git plugin's local-checkout security block for this specific, self-controlled setup.
+      JAVA_OPTS: -Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true
 
 volumes:
   communa_jenkins_home:
