@@ -3,7 +3,7 @@ import NavBar from '../components/NavBar';
 import { apiFetch } from '../lib/api';
 
 const TABS = [
-  { key: 'consumers', label: 'Pending Consumers' },
+  { key: 'consumers', label: 'Pending Accounts' },
   { key: 'sellers', label: 'Pending Sellers' },
   { key: 'approved', label: 'All Approved Sellers' },
 ];

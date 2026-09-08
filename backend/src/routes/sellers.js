@@ -32,6 +32,19 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
+// GET /api/sellers/mine (the logged-in seller's own listings, any status)
+router.get('/mine', verifyToken, requireRole('seller'), async (req, res) => {
+  try {
+    const result = await pool.query(
+      `${SELLER_SELECT} WHERE s.user_id = $1 ORDER BY s.created_at DESC`,
+      [req.user.id]
+    );
+    return res.status(200).json({ sellers: result.rows });
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to fetch your listings', error: err.message });
+  }
+});
+
 // GET /api/sellers/:id
 router.get('/:id', verifyToken, async (req, res) => {
   try {

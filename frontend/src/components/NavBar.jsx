@@ -1,8 +1,19 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../lib/api';
 
 export default function NavBar() {
   const { user, logout } = useAuth();
+  const [hasListing, setHasListing] = useState(false);
+
+  useEffect(() => {
+    if (user?.role === 'seller') {
+      apiFetch('/sellers/mine')
+        .then((data) => setHasListing(data.sellers.length > 0))
+        .catch(() => {});
+    }
+  }, [user?.role]);
 
   return (
     <header className="border-b border-gray-200 bg-white">
@@ -13,7 +24,7 @@ export default function NavBar() {
         <div className="flex items-center gap-4 text-sm">
           {user?.role === 'seller' && (
             <Link to="/sell" className="font-medium text-primary hover:underline">
-              Become a Seller
+              {hasListing ? 'My Listing' : 'Become a Seller'}
             </Link>
           )}
           {user?.role === 'admin' && (
